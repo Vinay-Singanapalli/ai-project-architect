@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 560" font-family="system-ui,-apple-system,Segoe UI,sans-serif" font-size="13">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#555"/></marker>
+    <style>.b{fill:#fff;stroke:#c9c6bd;stroke-width:1.2}.t{fill:#1d1f23}.s{fill:#6a6f78;font-size:11.5px}.h{font-weight:700;font-size:12px;letter-spacing:.04em;fill:#6a6f78}.l{stroke:#555;stroke-width:1.3;fill:none;marker-end:url(#a)}.d{stroke-dasharray:5 4}</style>
+  </defs>
+  <rect width="980" height="560" fill="#f6f5f2"/>
+  <text x="24" y="32" font-size="17" font-weight="700" class="t">Site Cloner – agent flow (everything runs locally: Playwright + Vite + Ollama)</text>
+
+  <text x="24" y="66" class="h">1 · ANALYSE (deterministic)</text>
+  <rect x="24" y="76" width="150" height="62" rx="9" class="b"/><text x="99" y="102" text-anchor="middle" class="t">Website URL</text><text x="99" y="120" text-anchor="middle" class="s">UI or CLI</text>
+  <rect x="214" y="76" width="210" height="62" rx="9" class="b"/><text x="319" y="98" text-anchor="middle" class="t">Headless Chromium</text><text x="319" y="116" text-anchor="middle" class="s">1440px + 390px, scroll, screenshots</text>
+  <rect x="464" y="76" width="230" height="62" rx="9" class="b"/><text x="579" y="98" text-anchor="middle" class="t">Extractor (in-page JS)</text><text x="579" y="116" text-anchor="middle" class="s">computed styles · text · images · SVG</text>
+  <rect x="734" y="76" width="222" height="62" rx="9" class="b"/><text x="845" y="98" text-anchor="middle" class="t">SiteAnalysis</text><text x="845" y="116" text-anchor="middle" class="s">sections + design tokens + assets</text>
+  <path class="l" d="M174 107H214"/><path class="l" d="M424 107H464"/><path class="l" d="M694 107H734"/>
+  <text x="214" y="158" class="s">no browser? → static HTML/CSS fallback (lower fidelity)</text>
+
+  <text x="24" y="196" class="h">2 · GENERATE (per-section, small prompts)</text>
+  <rect x="24" y="206" width="190" height="64" rx="9" class="b"/><text x="119" y="231" text-anchor="middle" class="t">Scaffold Vite+React+TS</text><text x="119" y="249" text-anchor="middle" class="s">theme.css · icons · manifest</text>
+  <rect x="254" y="206" width="250" height="64" rx="9" class="b"/><text x="379" y="231" text-anchor="middle" class="t">Ollama code model</text><text x="379" y="249" text-anchor="middle" class="s">skeleton HTML + styles → TSX + CSS</text>
+  <rect x="544" y="206" width="190" height="64" rx="9" class="b"/><text x="639" y="231" text-anchor="middle" class="t">Sanity checks</text><text x="639" y="249" text-anchor="middle" class="s">syntax · imports · CSS braces</text>
+  <rect x="774" y="206" width="182" height="64" rx="9" class="b"/><text x="865" y="231" text-anchor="middle" class="t">Deterministic renderer</text><text x="865" y="249" text-anchor="middle" class="s">tree → JSX (always compiles)</text>
+  <path class="l" d="M214 238H254"/><path class="l" d="M504 238H544"/><path class="l d" d="M734 238H774"/>
+  <text x="640" y="290" text-anchor="middle" class="s">rejected twice → fall back</text>
+  <path class="l" d="M845 138V190H119V206" stroke-dasharray="0"/>
+
+  <text x="24" y="326" class="h">3 · VALIDATE + REPAIR (self-healing loop)</text>
+  <rect x="24" y="336" width="200" height="64" rx="9" class="b"/><text x="124" y="361" text-anchor="middle" class="t">tsc + vite build</text><text x="124" y="379" text-anchor="middle" class="s">errors mapped to section files</text>
+  <rect x="264" y="336" width="220" height="64" rx="9" class="b"/><text x="374" y="361" text-anchor="middle" class="t">Runtime render check</text><text x="374" y="379" text-anchor="middle" class="s">per-section error boundaries</text>
+  <rect x="524" y="336" width="210" height="64" rx="9" class="b"/><text x="629" y="361" text-anchor="middle" class="t">Model repairs file</text><text x="629" y="379" text-anchor="middle" class="s">2 rounds, then fallback</text>
+  <rect x="774" y="336" width="182" height="64" rx="9" class="b"/><text x="865" y="361" text-anchor="middle" class="t">Fidelity pass</text><text x="865" y="379" text-anchor="middle" class="s">screenshot diff per section</text>
+  <path class="l" d="M224 368H264"/><path class="l" d="M484 368H524"/><path class="l" d="M734 368H774"/>
+  <path class="l" d="M639 270V320H124V336"/>
+
+  <text x="24" y="436" class="h">4 · PREVIEW + MODIFY</text>
+  <rect x="24" y="446" width="190" height="64" rx="9" class="b"/><text x="119" y="471" text-anchor="middle" class="t">Vite dev server (HMR)</text><text x="119" y="489" text-anchor="middle" class="s">desktop / tablet / mobile</text>
+  <rect x="254" y="446" width="200" height="64" rx="9" class="b"/><text x="354" y="471" text-anchor="middle" class="t">Instruction</text><text x="354" y="489" text-anchor="middle" class="s">natural language</text>
+  <rect x="494" y="446" width="220" height="64" rx="9" class="b"/><text x="604" y="471" text-anchor="middle" class="t">Planner</text><text x="604" y="489" text-anchor="middle" class="s">rules first (0 tokens), else JSON ops</text>
+  <rect x="754" y="446" width="202" height="64" rx="9" class="b"/><text x="855" y="471" text-anchor="middle" class="t">Execute → validate</text><text x="855" y="489" text-anchor="middle" class="s">snapshot · rollback · undo</text>
+  <path class="l" d="M454 478H494"/><path class="l" d="M714 478H754"/>
+  <path class="l d" d="M855 510V540H119V510"/>
+  <path class="l" d="M865 400V430H119V446"/>
+</svg>

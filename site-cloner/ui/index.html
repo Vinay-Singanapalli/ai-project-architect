@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Site Cloner</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --panel: #ffffff; --ink: #1d1f23; --muted: #6a6f78; --line: #e4e2dc;
+    --accent: #1f5eff; --accent-ink: #fff; --ok: #1a7f4b; --warn: #a15c00; --err: #b42318;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #15161a; --panel: #1d1f24; --ink: #ecedf0; --muted: #9298a3; --line: #2d3037; --accent: #6b93ff; --accent-ink: #0b1020; --ok: #49c283; --warn: #e0a24a; --err: #ff7b6e; }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--ink); display: grid; grid-template-columns: 380px 1fr; }
+  aside { background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  .block { padding: 16px 18px; border-bottom: 1px solid var(--line); }
+  h1 { font-size: 16px; margin: 0 0 2px; letter-spacing: -.01em; }
+  .sub { color: var(--muted); font-size: 12.5px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 0 0 6px; }
+  .row { display: flex; gap: 8px; }
+  input[type=text], select, textarea { width: 100%; font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; }
+  textarea { resize: vertical; min-height: 64px; }
+  input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button { font: inherit; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); padding: 8px 12px; cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .opts { display: flex; gap: 10px; margin-top: 10px; align-items: center; font-size: 12.5px; color: var(--muted); flex-wrap: wrap; }
+  .opts select { width: auto; padding: 4px 6px; }
+  .opts label { display: inline-flex; margin: 0; gap: 6px; align-items: center; }
+  .chip { display: inline-block; font-size: 11.5px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+  .chip.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--line)); }
+  .chip.bad { color: var(--err); border-color: color-mix(in srgb, var(--err) 40%, var(--line)); }
+  .examples { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .examples button { font-size: 12px; padding: 3px 9px; border-radius: 99px; color: var(--muted); }
+  #log { flex: 1; min-height: 120px; overflow: auto; padding: 12px 18px; font: 12px/1.5 var(--mono); }
+  #log div { padding: 1px 0; display: grid; grid-template-columns: 70px 1fr; gap: 8px; }
+  #log .st { color: var(--muted); }
+  #log .warn .m { color: var(--warn); } #log .error .m { color: var(--err); } #log .success .m { color: var(--ok); }
+  .sections { max-height: 150px; overflow: auto; margin-top: 8px; font-size: 12.5px; }
+  .sections div { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed var(--line); }
+  .sections span:last-child { color: var(--muted); font-size: 11.5px; }
+  main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .bar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .seg button { border: 0; border-radius: 0; background: transparent; padding: 6px 12px; }
+  .seg button[aria-pressed=true] { background: var(--accent); color: var(--accent-ink); }
+  .spacer { flex: 1; }
+  .stage { flex: 1; min-height: 0; overflow: auto; display: flex; justify-content: center; padding: 20px; }
+  .frame { background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px rgb(0 0 0 / .08); overflow: hidden; width: 100%; height: 100%; transition: width .2s ease; }
+  .frame iframe { width: 100%; height: 100%; border: 0; display: block; background: #fff; }
+  .frame.orig { overflow: auto; }
+  .frame.orig img { width: 100%; display: block; }
+  .empty { margin: auto; text-align: center; color: var(--muted); max-width: 380px; }
+  .empty h2 { color: var(--ink); font-size: 18px; margin: 0 0 6px; }
+  .busy { display: none; width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+  body.is-busy .busy { display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .busy { animation-duration: 2.4s; } .frame { transition: none; } }
+  @media (max-width: 900px) { body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; } aside { border-right: 0; border-bottom: 1px solid var(--line); } }
+</style>
+</head>
+<body>
+<aside>
+  <div class="block">
+    <h1>Site Cloner</h1>
+    <div class="sub">Clone a public website into React, then edit it in plain English. Runs locally on Ollama.</div>
+    <div style="margin-top:10px"><span id="llm" class="chip">checking Ollama…</span></div>
+  </div>
+
+  <div class="block">
+    <label for="url">Website URL</label>
+    <div class="row">
+      <input id="url" type="text" placeholder="https://example.com" autocomplete="off" spellcheck="false" />
+      <button id="cloneBtn" class="primary">Clone</button>
+    </div>
+    <div class="opts">
+      <label><input type="checkbox" id="noai" /> rebuild without the model</label>
+      <label>open <select id="sites"><option value="">saved…</option></select></label>
+    </div>
+  </div>
+
+  <div class="block" id="editBlock">
+    <label for="prompt">Change the site</label>
+    <textarea id="prompt" placeholder="e.g. Change the primary color to blue" disabled></textarea>
+    <div class="row" style="margin-top:8px">
+      <button id="applyBtn" class="primary" disabled>Apply change</button>
+      <button id="undoBtn" disabled>Undo</button>
+      <span class="busy" id="spin" aria-label="working"></span>
+    </div>
+    <div class="examples" id="examples"></div>
+    <div class="sections" id="sections"></div>
+  </div>
+
+  <div id="log" aria-live="polite"></div>
+</aside>
+
+<main>
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Viewport">
+      <button data-w="100%" aria-pressed="true">Desktop</button>
+      <button data-w="768px" aria-pressed="false">Tablet</button>
+      <button data-w="390px" aria-pressed="false">Mobile</button>
+    </div>
+    <div class="seg" role="group" aria-label="Which version">
+      <button data-view="clone" aria-pressed="true">Clone</button>
+      <button data-view="orig" aria-pressed="false" id="origBtn" disabled>Original</button>
+    </div>
+    <button id="reload">Reload</button>
+    <a id="open" target="_blank" rel="noreferrer" style="color:var(--accent);font-size:13px" hidden>Open in new tab ↗</a>
+    <span class="spacer"></span>
+    <span class="sub" id="meta"></span>
+  </div>
+  <div class="stage" id="stage">
+    <div class="empty" id="empty"><h2>No site yet</h2>Paste a URL on the left. The agent analyses the page, writes a React project and shows it here.</div>
+  </div>
+</main>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const log = $('#log');
+let state = { site: null, width: '100%', view: 'clone', busy: false };
+
+const EXAMPLES = ['Change the primary color to blue', 'Make the navbar sticky', 'Remove the pricing section', 'Add a testimonials section', 'Replace the hero section with a bakery hero'];
+$('#examples').innerHTML = EXAMPLES.map((e) => `<button type="button">${e}</button>`).join('');
+$('#examples').onclick = (e) => { if (e.target.tagName === 'BUTTON') { $('#prompt').value = e.target.textContent; $('#prompt').focus(); } };
+
+function addLog(ev) {
+  const d = document.createElement('div');
+  d.className = ev.level;
+  d.innerHTML = `<span class="st"></span><span class="m"></span>`;
+  d.children[0].textContent = ev.stage;
+  d.children[1].textContent = ev.message;
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+}
+
+function setBusy(b) {
+  state.busy = b;
+  document.body.classList.toggle('is-busy', b);
+  render();
+}
+
+async function api(path, body) {
+  const r = await fetch(path, body === undefined ? undefined : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+
+async function refresh() {
+  const s = await api('/api/status');
+  state.site = s.site;
+  const chip = $('#llm');
+  if (s.llm) { chip.textContent = `Ollama · ${s.llm.code}`; chip.className = 'chip ok'; }
+  else { chip.textContent = 'Ollama not reachable — click to retry'; chip.className = 'chip bad'; chip.onclick = async () => { await api('/api/reconnect', {}); refresh(); }; chip.style.cursor = 'pointer'; chip.title = s.llmError || ''; }
+  const sel = $('#sites');
+  sel.innerHTML = '<option value="">saved…</option>' + s.sites.map((x) => `<option ${s.site && s.site.slug === x ? 'selected' : ''}>${x}</option>`).join('');
+  setBusy(s.busy);
+}
+
+function render() {
+  const s = state.site;
+  const ready = !!s && !state.busy;
+  $('#cloneBtn').disabled = state.busy;
+  $('#prompt').disabled = !ready; $('#applyBtn').disabled = !ready; $('#undoBtn').disabled = !ready || !s.canUndo;
+  $('#origBtn').disabled = !s || !s.hasOriginal;
+  $('#sections').innerHTML = s ? s.sections.map((x) => `<div><span>${x.id}</span><span>${x.type} · ${x.source}</span></div>`).join('') : '';
+  $('#open').hidden = !s; if (s) $('#open').href = s.previewUrl;
+  $('#meta').textContent = s ? `${s.slug}` : '';
+  const stage = $('#stage');
+  if (!s) { stage.innerHTML = '<div class="empty"><h2>No site yet</h2>Paste a URL on the left. The agent analyses the page, writes a React project and shows it here.</div>'; return; }
+  let frame = stage.querySelector('.frame');
+  const wantOrig = state.view === 'orig';
+  if (!frame || frame.classList.contains('orig') !== wantOrig || frame.dataset.slug !== s.slug) {
+    stage.innerHTML = wantOrig
+      ? `<div class="frame orig" data-slug="${s.slug}"><img alt="Original page screenshot" src="/api/${state.width === '390px' ? 'original/mobile' : 'original/desktop'}.png?t=${Date.now()}"></div>`
+      : `<div class="frame" data-slug="${s.slug}"><iframe title="Generated site preview" src="${s.previewUrl}"></iframe></div>`;
+    frame = stage.querySelector('.frame');
+  }
+  frame.style.width = state.width;
+  if (wantOrig) frame.querySelector('img').src = `/api/original/${state.width === '390px' ? 'mobile' : 'desktop'}.png`;
+}
+
+document.querySelectorAll('[data-w]').forEach((b) => b.onclick = () => {
+  document.querySelectorAll('[data-w]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  state.width = b.dataset.w; render();
+});
+document.querySelectorAll('[data-view]').forEach((b) => b.onclick = () => {
+  document.querySelectorAll('[data-view]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  state.view = b.dataset.view; render();
+});
+$('#reload').onclick = () => { const f = document.querySelector('iframe'); if (f) f.src = f.src; };
+
+$('#cloneBtn').onclick = async () => {
+  const url = $('#url').value.trim(); if (!url) return $('#url').focus();
+  log.innerHTML = ''; state.site = null; state.view = 'clone';
+  document.querySelectorAll('[data-view]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.view === 'clone')));
+  setBusy(true);
+  try { await api('/api/clone', { url, mode: $('#noai').checked ? 'deterministic' : 'hybrid' }); } catch (e) { addLog({ stage: 'error', level: 'error', message: e.message }); setBusy(false); }
+};
+$('#url').onkeydown = (e) => { if (e.key === 'Enter') $('#cloneBtn').click(); };
+
+$('#applyBtn').onclick = async () => {
+  const prompt = $('#prompt').value.trim(); if (!prompt) return;
+  setBusy(true);
+  try { await api('/api/modify', { prompt }); } catch (e) { addLog({ stage: 'error', level: 'error', message: e.message }); setBusy(false); }
+};
+$('#prompt').onkeydown = (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) $('#applyBtn').click(); };
+$('#undoBtn').onclick = async () => { try { await api('/api/undo', {}); } catch (e) { addLog({ stage: 'error', level: 'error', message: e.message }); } refresh(); };
+$('#sites').onchange = async (e) => { if (!e.target.value) return; try { await api('/api/open', { slug: e.target.value }); } catch (err) { addLog({ stage: 'error', level: 'error', message: err.message }); } state.view = 'clone'; refresh(); };
+
+const es = new EventSource('/api/events');
+es.onmessage = async (m) => {
+  const ev = JSON.parse(m.data);
+  addLog(ev);
+  if (ev.stage === 'done' || ev.stage === 'error') { await refresh(); if (ev.data && ev.data.ok !== false && ev.data.modified) $('#prompt').value = ''; }
+};
+refresh();
+</script>
+</body>
+</html>
